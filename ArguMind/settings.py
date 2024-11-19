@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-*l+#arb7uly=8&jdtx)px(jy1&5mh@p5#!b7!9h05ln*$gsdl_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['https://argumind.uitae.kim/', 'localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
