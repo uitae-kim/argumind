@@ -62,6 +62,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    'https://argumind.uitae.kim',
     'http://127.0.0.1',
     'http://localhost:3000',  # React 개발 서버
 ]
