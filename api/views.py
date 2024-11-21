@@ -116,6 +116,72 @@ class GetArgument(APIView):
                 status=400
             )
 
+class GetHistoricalFigure(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            data = request.data
+            figure = data['figure']
+            prompt = f"""
+                당신은 {figure}입니다. 당신의 말투, 성격, 그리고 역사적 맥락을 반영하여 사용자와 대화를 진행하세요.
+                사용자에게 자신을 간단히 소개한 후 대화를 시작하세요.
+            """
+            introduction = _OpenAIHelper.generate(
+                system=f"당신은 {figure}로서 행동하고 대화하는 AI입니다.",
+                prompt=prompt,
+                temperature=0.7
+            )
+            return JsonResponse(
+                {
+                    'introduction': introduction
+                },
+                status=200
+            )
+        except Exception as e:
+            return JsonResponse(
+                {
+                    'error': str(e)
+                },
+                status=400
+            )
+
+
+class GetHistoricalResponse(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            data = request.data
+            figure = data['figure']
+            history = data['history']
+            message = data['message']
+            prompt = f"""
+                당신은 {figure}입니다. 아래는 지금까지의 대화 기록입니다:
+                {history}
+                사용자 메시지:
+                {message}
+                위의 메시지에 {figure}로서 응답하세요.
+            """
+            response = _OpenAIHelper.generate(
+                system=f"당신은 {figure}로서 행동하고 대화하는 AI입니다.",
+                prompt=prompt,
+                temperature=0.7
+            )
+            return JsonResponse(
+                {
+                    'response': response
+                },
+                status=200
+            )
+        except Exception as e:
+            return JsonResponse(
+                {
+                    'error': str(e)
+                },
+                status=400
+            )
+
 
 class _OpenAIHelper:
     _client = None
