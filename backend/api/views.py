@@ -1,6 +1,6 @@
-import json
 import os
-import openai
+import random
+import re
 
 from django.http import JsonResponse
 
@@ -10,9 +10,35 @@ from dotenv import load_dotenv
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
+from api.models import Game, Turn, Score
+
+# Maps the Korean score labels produced by the judge prompt to model fields.
+SCORE_LABELS = [
+    ('logical_consistency', '논리적 일관성'),
+    ('relevance', '관련성'),
+    ('creativity', '창의성'),
+    ('rebuttal', '반박 효과'),
+    ('summarization', '요약력'),
+]
+
+
+def _parse_scores(raw):
+    """Parse the judge's free-text scores into a {field: int} dict.
+
+    Each axis is matched by its label so stray numbers (e.g. list markers)
+    no longer pollute the total. Missing axes default to 0.
+    """
+    parsed = {}
+    for field, label in SCORE_LABELS:
+        match = re.search(re.escape(label) + r'\s*[:：]?\s*(\d{1,3})', raw)
+        value = int(match.group(1)) if match else 0
+        parsed[field] = max(0, min(100, value))
+    return parsed
+
 
 class GetTopic(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'get_topic'
 
     def post(self, request):
         prompt = """
@@ -28,9 +54,23 @@ class GetTopic(APIView):
             system="당신은 창의적인 논쟁 주제를 생성하는 AI입니다.",
             prompt=prompt
         )
+
+        # Positions are assigned server-side so a persisted Game is self-contained.
+        user_position = random.choice([Game.FOR, Game.AGAINST])
+        opponent_position = Game.AGAINST if user_position == Game.FOR else Game.FOR
+
+        game = Game.objects.create(
+            topic=topic,
+            user_position=user_position,
+            opponent_position=opponent_position,
+        )
+
         return JsonResponse(
             {
-                'topic': topic
+                'game_id': game.pk,
+                'topic': topic,
+                'user_position': user_position,
+                'opponent_position': opponent_position,
             },
             status=200
         )
@@ -38,6 +78,7 @@ class GetTopic(APIView):
 
 class GetScores(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'get_scores'
 
     def post(self, request):
         try:
@@ -61,28 +102,59 @@ class GetScores(APIView):
                 형식: 논리적 일관성: 점수, 관련성: 점수, 창의성: 점수, 반박 효과: 점수, 요약력: 점수
                 반드시 형식을 준수하세요.
                 """
-            scores = _OpenAIHelper.generate(
+            raw = _OpenAIHelper.generate(
                 system="당신은 논리를 평가하는 심판 AI입니다.",
                 prompt=prompt,
                 temperature=0.7
             )
+            scores = _parse_scores(raw)
+            total = sum(scores.values())
+
+            # Optional persistence: only when the client supplies a game context.
+            self._persist(data, text, scores, total, raw)
+
             return JsonResponse(
                 {
-                    'scores': scores
+                    'scores': scores,
+                    'total': total,
+                    'max_total': 100 * len(SCORE_LABELS),
+                    'raw': raw,
                 },
                 status=200
             )
+        except KeyError as e:
+            return JsonResponse({'error': f'missing field: {e.args[0]}'}, status=400)
         except Exception as e:
-            return JsonResponse(
-                {
-                    'error': str(e)
-                },
-                status=400
+            return JsonResponse({'error': str(e)}, status=400)
+
+    @staticmethod
+    def _persist(data, text, scores, total, raw):
+        """Persist the turn statement and its score; failures never break the response."""
+        game_id = data.get('game_id')
+        turn_index = data.get('turn_index')
+        side = data.get('side')
+        if not game_id or turn_index is None or side not in (Score.USER, Score.OPPONENT):
+            return
+        try:
+            turn, _ = Turn.objects.get_or_create(game_id=game_id, index=turn_index)
+            if side == Score.USER:
+                turn.user_text = text
+            else:
+                turn.opponent_text = text
+            turn.save()
+            Score.objects.update_or_create(
+                turn=turn,
+                side=side,
+                defaults={**scores, 'total': total, 'raw': raw},
             )
+        except Exception:
+            # Persistence is best-effort; the game must keep working regardless.
+            pass
 
 
 class GetArgument(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'get_argument'
 
     def post(self, request):
         try:
@@ -108,6 +180,8 @@ class GetArgument(APIView):
                 },
                 status=200
             )
+        except KeyError as e:
+            return JsonResponse({'error': f'missing field: {e.args[0]}'}, status=400)
         except Exception as e:
             return JsonResponse(
                 {
@@ -135,7 +209,7 @@ class _OpenAIHelper:
         if not cls._is_loaded:
             cls._load()
 
-        response = openai.chat.completions.create(
+        response = cls._client.chat.completions.create(
             model='gpt-4o',
             messages=[
                 {'role': 'system', "content": system},

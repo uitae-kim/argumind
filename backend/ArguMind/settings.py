@@ -13,20 +13,57 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+# BASE_DIR points to the Django backend root (the `backend/` directory).
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# REPO_ROOT points to the repository root (parent of `backend/`), where the
+# `frontend/` directory lives. Used to locate the built React app.
+REPO_ROOT = os.path.dirname(BASE_DIR)
+
+# Load environment variables from backend/.env (see .env.example).
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+
+def _env_bool(name, default=False):
+    """Read a boolean-ish environment variable."""
+    return os.getenv(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*l+#arb7uly=8&jdtx)px(jy1&5mh@p5#!b7!9h05ln*$gsdl_'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Defaults to True for local dev; set DJANGO_DEBUG=False in production.
+DEBUG = _env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = ['argumind.uitae.kim', 'localhost', '127.0.0.1', '0.0.0.0']
+# SECURITY WARNING: keep the secret key used in production secret!
+# The key is read exclusively from the DJANGO_SECRET_KEY env var (see backend/.env);
+# no secret is hardcoded in source. In DEBUG a missing key falls back to an
+# ephemeral random key (fine for local dev); outside DEBUG it is a hard error.
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = get_random_secret_key()
+    else:
+        raise ImproperlyConfigured(
+            'DJANGO_SECRET_KEY environment variable must be set when DEBUG is False.'
+        )
+
+# Comma-separated list via DJANGO_ALLOWED_HOSTS, e.g. "example.com,api.example.com".
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'DJANGO_ALLOWED_HOSTS',
+        'argumind.uitae.kim,localhost,127.0.0.1,0.0.0.0',
+    ).split(',')
+    if host.strip()
+]
 
 
 # Application definition
@@ -47,11 +84,22 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # The LLM-backed endpoints are intentionally public (AllowAny) so the game
+    # needs no login, but each call costs an OpenAI request. Scoped rate limits
+    # cap abuse/cost without breaking the anonymous flow. Override the rates via
+    # the DRF_THROTTLE_* env vars.
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.ScopedRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'get_topic': os.getenv('DRF_THROTTLE_GET_TOPIC', '30/min'),
+        'get_argument': os.getenv('DRF_THROTTLE_GET_ARGUMENT', '30/min'),
+        'get_scores': os.getenv('DRF_THROTTLE_GET_SCORES', '60/min'),
+    },
 }
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,7 +119,7 @@ ROOT_URLCONF = 'ArguMind.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'build')],
+        'DIRS': [os.path.join(REPO_ROOT, 'frontend', 'build')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -93,7 +141,7 @@ WSGI_APPLICATION = 'ArguMind.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -134,9 +182,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend', 'build', 'static'),
-]
+# Only registered once the React app has been built, to avoid a staticfiles
+# warning during backend-only development.
+_FRONTEND_STATIC = os.path.join(REPO_ROOT, 'frontend', 'build', 'static')
+STATICFILES_DIRS = [_FRONTEND_STATIC] if os.path.isdir(_FRONTEND_STATIC) else []
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
