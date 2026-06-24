@@ -190,3 +190,9 @@ sketch
 
 # oh-my-claudecode orchestration state
 .omc/
+
+# Claude Code local state (worktrees, tooling)
+.claude/
+
+# JetBrains IDE
+.idea/
