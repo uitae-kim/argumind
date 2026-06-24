@@ -6,11 +6,14 @@ ArguMind는 AI가 생성한 주제에 대해 사용자가 무작위로 배정받
 
 ## 핵심 기능
 
-- **주제 생성**: `POST /api/get-topic`(`GetTopic`)가 LLM(gpt-4o)으로 논쟁 유발형 토론 주제를 1개 생성합니다. 요청 본문은 필요 없습니다.
-- **입장 배정**: **서버**가 `random.choice`로 사용자에게 `찬성`/`반대`를 무작위 배정하고, AI 상대는 자동으로 반대 입장을 가집니다. 응답(`{game_id, topic, user_position, opponent_position}`)에 배정 결과가 포함됩니다.
-- **턴제 논쟁**: 사용자가 주장을 입력하면 `submitArgument()`이 발언 기록(`history`)에 추가하고, AI 반박을 받아온 뒤 양측 점수를 채점하는 한 턴이 완료됩니다.
-- **AI 반박**: `POST /api/get-argument`(`GetArgument`)가 주제·상대 입장·발언 기록을 받아 사용자 주장에 대응하는 AI 반박을 생성합니다.
-- **5축 채점**: `POST /api/get-scores`(`GetScores`)가 **논리적 일관성 / 관련성 / 창의성 / 반박 효과 / 요약력** 5개 축을 각 0~100점으로 평가합니다. 사용자 주장과 AI 반박을 각각 채점하며, 백엔드가 구조화된 JSON(`{scores:{...}, total, max_total:500, raw}`)으로 반환하므로 클라이언트는 숫자를 직접 합산하지 않습니다.
+- **매치 설정**: 게임 시작 전 `설정(Setup)` 화면에서 **주제 영역**(사회·윤리/기술·AI/문화·예술/무작위), **상대 토론자 페르소나**(논리주의자/도발가/소크라테스식/역사 속 인물), **매치 길이**(3턴/5턴/무제한)를 고릅니다. 선택값은 `POST /api/get-topic` 요청 본문(`{category, opponent_persona, max_turns}`)으로 전달되어 `Game`에 저장됩니다.
+- **주제 생성**: `POST /api/get-topic`(`GetTopic`)가 Google AI(Gemma)로 논쟁 유발형 주제를 1개 생성합니다. `category`로 주제 영역을 편향시키며, 응답에 `{game_id, topic, user_position, opponent_position, category, opponent_persona, max_turns, status}`를 포함합니다.
+- **입장 배정**: **서버**가 `random.choice`로 사용자에게 `찬성`/`반대`를 무작위 배정하고, AI 상대는 자동으로 반대 입장을 가집니다.
+- **턴제 논쟁 + 매치 구조**: 사용자가 주장을 입력하면 한 턴이 진행되고, `max_turns`에 도달하면 자동으로 **판정 화면**으로 전환됩니다(무제한은 자동 전환 없음). 진행 상황은 레일의 턴 진행 핍으로 표시됩니다.
+- **AI 반박**: `POST /api/get-argument`(`GetArgument`)가 주제·상대 입장·발언 기록과 **페르소나**(`opponent_persona`, 없으면 `game_id`로 조회)를 받아 페르소나별 시스템 프롬프트로 반박을 생성합니다.
+- **5축 채점 + 심판 코멘트**: `POST /api/get-scores`(`GetScores`)가 **논리적 일관성 / 관련성 / 창의성 / 반박 효과 / 요약력** 5개 축을 각 0~100점으로 평가하고, **한 줄 총평(`comment`)**을 함께 반환합니다. 구조화 JSON(`{scores:{...}, total, max_total:500, comment, raw}`).
+- **판정(Verdict)**: 매치 종료 시 누적 결과를 보여줍니다 — 승패, 양측 **평균 총점(/500)**, 5축 오각형 레이더, 턴별 점수 추이 스파크라인, 심판 총평.
+- **토론 기록(History)**: `GET /api/games`(목록·전적) / `GET /api/games/<id>`(상세 집계)로 지난 토론을 다시 봅니다. 누적 총점은 **턴별 총점의 평균**, 추이는 **턴별 총점 배열**로 통일됩니다.
 
 ## 기술 스택
 
@@ -20,12 +23,13 @@ ArguMind는 AI가 생성한 주제에 대해 사용자가 무작위로 배정받
 | 백엔드 | Django REST Framework | 3.15.2 |
 | 백엔드 | djangorestframework-simplejwt | 5.3.1 (JWT 토큰 발급, 단 API 엔드포인트는 미사용) |
 | 백엔드 | django-cors-headers | 4.6.0 |
-| 백엔드 | python-dotenv | 1.0.1 (`.env`에서 `OPENAI_API_KEY` 로드) |
+| 백엔드 | python-dotenv | 1.0.1 (`.env`에서 `GOOGLE_API_KEY` 로드) |
 | 백엔드 | 데이터베이스 | sqlite3 (`db.sqlite3`) |
 | 프론트엔드 | React | 18.3 |
 | 프론트엔드 | Create React App | react-scripts 5.0.1 |
-| 프론트엔드 | 구조 | `useGame` 훅 + 7개 컴포넌트 분해, 인라인 스타일, 라우터/상태 관리 라이브러리 없음 |
-| 외부 | OpenAI | openai 1.54.4, 모델 `gpt-4o` |
+| 프론트엔드 | 구조 | `useGame` 화면 상태 머신(`start/setup/debate/result/history`) + 8개 컴포넌트, 디자인 토큰 기반 `index.css`(인라인 스타일 제거), 라우터/상태 관리 라이브러리 없음 |
+| 프론트엔드 | 디자인 | "변증의 장" 디자인 시스템 — `docs/design/DESIGN_SYSTEM.md`. 폰트: Pretendard / Nanum Myeongjo / IBM Plex Mono(CDN) |
+| 외부 | Google AI Studio | `openai` 1.54.4 클라이언트(OpenAI 호환 엔드포인트), 모델 `gemma-4-31b-it`(기본, `GOOGLE_AI_MODEL`로 변경) |
 
 ## 폴더 구조
 
@@ -42,15 +46,16 @@ argumind/
 │   │   └── wsgi.py            # WSGI 진입점
 │   ├── api/                   # Django 앱: 논쟁 게임 API
 │   │   ├── __init__.py
-│   │   ├── views.py           # GetTopic / GetScores / GetArgument + _OpenAIHelper + _parse_scores
-│   │   ├── urls.py            # /api/get-topic, /api/get-scores, /api/get-argument
-│   │   ├── models.py          # Game / Turn / Score 모델
+│   │   ├── views.py           # GetTopic / GetScores / GetArgument / GameList / GameDetail + _GoogleAIHelper + _parse_scores / _parse_comment + CATEGORY/PERSONA_PROMPTS
+│   │   ├── urls.py            # /api/get-topic, /api/get-scores, /api/get-argument, /api/games, /api/games/<id>
+│   │   ├── models.py          # Game(+category/opponent_persona/max_turns/status) / Turn / Score(+comment)
 │   │   ├── admin.py           # Game/Turn/Score 관리자 등록(인라인 포함)
 │   │   ├── apps.py            # 앱 설정
-│   │   ├── tests.py           # _parse_scores 파싱 + 모델 관계 테스트 (4개)
+│   │   ├── tests.py           # 파싱(_parse_scores/_parse_comment) + 모델 + GameDetail/GameList 테스트 (11개)
 │   │   └── migrations/
 │   │       ├── __init__.py
-│   │       └── 0001_initial.py  # Game/Turn/Score 테이블 생성
+│   │       ├── 0001_initial.py  # Game/Turn/Score 테이블 생성
+│   │       └── 0002_...py       # Game category/persona/max_turns/status + Score.comment 추가
 │   ├── .env.example           # 환경변수 예시 (OPENAI_API_KEY, DJANGO_SECRET_KEY 등)
 │   ├── manage.py              # Django 관리 명령 진입점
 │   └── requirements.txt       # 백엔드 파이썬 의존성
@@ -75,18 +80,20 @@ argumind/
 │       ├── logo.svg
 │       ├── reportWebVitals.js
 │       ├── setupTests.js
+│       ├── constants.js       # SCORE_AXES/SCORE_LABELS + CATEGORIES / PERSONAS / MATCH_LENGTHS + 헬퍼
 │       ├── api/
-│       │   └── client.js      # postJSON fetch 래퍼 + getTopic / getArgument / getScores
+│       │   └── client.js      # fetch 래퍼 + getTopic / getArgument / getScores / getGames / getGameResult
 │       ├── hooks/
-│       │   └── useGame.js     # 게임 상태(11개) + startGame / resetGame / submitArgument / fetchScores
+│       │   └── useGame.js     # 화면 상태 머신 + 매치 구조 + 턴별 채점/누적 + 기록 로드
 │       └── components/
-│           ├── StartScreen.js
-│           ├── GameScreen.js
-│           ├── TopicHeader.js
-│           ├── ChatHistory.js
-│           ├── ArgumentInput.js
-│           ├── ScoreBoard.js
-│           └── ErrorBanner.js
+│           ├── StartScreen.js   # 랜딩(히어로 + 루프)
+│           ├── SetupScreen.js   # 매치 설정(영역/페르소나/길이)
+│           ├── GameScreen.js    # 토론(레일+아레나+컴포저), 턴 핍·심판 코멘트 포함
+│           ├── ResultScreen.js  # 판정(판결지 + 레이더 + 추이)
+│           ├── HistoryScreen.js # 토론 기록(전적 + 매치 목록)
+│           ├── ScoreRadar.js    # 5축 오각형 레이더 SVG
+│           ├── ScoreTrend.js    # 턴별 점수 추이 스파크라인 SVG
+│           └── ErrorBanner.js   # 오류 배너
 ├── docs/                      # 프로젝트 문서(OVERVIEW/ARCHITECTURE/SEQUENCE/WIREFRAME/README)
 └── .gitignore
 ```
@@ -159,6 +166,8 @@ npm start
 
 ### 남은 한계
 
-- **인증**: 세 게임 엔드포인트는 여전히 `AllowAny`입니다. 로그인 기반 인증은 도입되지 않았으며, **DRF 스코프 스로틀링**(get_topic: 30/min, get_argument: 30/min, get_scores: 60/min)으로 비용 남용을 완화합니다. SimpleJWT 인프라는 미래 인증 도입을 위해 유지됩니다.
-- **브랜치-코드 불일치**: 현재 브랜치 `feature-historicalFigure`와 최근 커밋 메시지("chatting with historical figure")가 가리키는 "역사적 인물과 대화" 기능은 현재 코드에 구현되어 있지 않습니다. 브랜치 정리 또는 기능 구현이 필요합니다.
-- **UI·UX**: 로딩 스피너, 점수 시각화(막대 차트), 게임 종료/승패 판정, Submit 버튼 비활성화, 접근성·반응형, 디자인 토큰은 이번 리팩토링 범위 밖입니다.
+- **인증**: 모든 엔드포인트가 여전히 `AllowAny`입니다. 로그인 기반 인증은 미도입이며, **DRF 스코프 스로틀링**(get_topic 30/min, get_argument 30/min, get_scores 60/min, game_read 120/min)으로 비용 남용을 완화합니다. SimpleJWT 인프라는 미래 인증 도입을 위해 유지됩니다. 기록(History)은 현재 사용자 구분 없이 전체 게임을 보여주므로, 사용자별 기록을 위해서는 인증이 선행되어야 합니다.
+- **라우팅**: 화면 전환은 라우터 없이 `useGame`의 화면 상태(`screen`)로만 처리합니다. 딥링크/뒤로가기/새로고침 시 상태가 유지되지 않으므로, 기록 상세 공유 등에는 React Router 도입이 필요합니다.
+- **영속화 의존성**: 진행 중 매치의 판정 화면은 클라이언트 누적값으로 그리므로 DB 장애에도 안전하지만, **기록(History)**은 best-effort로 저장된 `Turn`/`Score`에 의존하므로 채점 저장이 실패한 턴은 집계에서 누락될 수 있습니다.
+- ~~**UI·UX**~~ **(해결)**: 디자인 시스템(`index.css`), 로딩 상태, 점수 시각화(레이더·추이·막대), 승패 판정 화면, 입력 미세 UX(글자 수·단축키·비활성), 접근성·반응형이 이번 리팩토링에서 구현되었습니다. 자세한 설계는 `docs/design/DESIGN_SYSTEM.md` 참고.
+- ~~**브랜치-코드 불일치**~~ **(부분 해결)**: "역사적 인물" 아이디어는 설정 화면의 **상대 페르소나(역사 속 인물 포함)**로 흡수되었습니다. 단, 특정 인물 지정 UI까지는 구현하지 않았습니다.

@@ -1,5 +1,9 @@
 # ArguMind 와이어프레임 (UI 명세)
 
+> ⚠️ **이 문서는 리디자인 이전(구버전) UI를 설명합니다.** 현재 UI는 "변증의 장" 디자인 시스템으로 재구성되었습니다.
+> 최신 화면·컴포넌트·디자인 토큰은 [`design/DESIGN_SYSTEM.md`](./design/DESIGN_SYSTEM.md)와 [`design/mockup.html`](./design/mockup.html)을 참고하세요.
+> 본 문서는 변경 이력 파악용으로 보존합니다.
+
 본 문서는 `frontend/src/App.js` 단일 컴포넌트로 구성된 현재 UI를 ASCII 와이어프레임으로 표현하고, 각 UI 요소의 역할/스타일/연결 상태를 정리한다. 모든 스타일은 **인라인 스타일**로만 작성되어 있으며, 별도의 CSS 클래스나 디자인 시스템은 사용되지 않는다(`App.css`, `index.css`는 존재하나 컴포넌트에서 활용하지 않음).
 
 > 기준 파일: `frontend/src/hooks/useGame.js` (상태·로직) + `frontend/src/components/` (StartScreen, GameScreen, TopicHeader, ChatHistory, ArgumentInput, ScoreBoard, ErrorBanner) + `frontend/src/App.js` (조합)

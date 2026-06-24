@@ -95,6 +95,7 @@ REST_FRAMEWORK = {
         'get_topic': os.getenv('DRF_THROTTLE_GET_TOPIC', '30/min'),
         'get_argument': os.getenv('DRF_THROTTLE_GET_ARGUMENT', '30/min'),
         'get_scores': os.getenv('DRF_THROTTLE_GET_SCORES', '60/min'),
+        'game_read': os.getenv('DRF_THROTTLE_GAME_READ', '120/min'),
     },
 }
 

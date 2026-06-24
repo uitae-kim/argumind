@@ -3,10 +3,10 @@
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || "";
 
-async function postJSON(path, body) {
+async function request(path, { method = "GET", body } = {}) {
   const response = await fetch(`${SERVER_URL}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -23,6 +23,14 @@ async function postJSON(path, body) {
   return response.json();
 }
 
-export const getTopic = () => postJSON("/api/get-topic");
+const postJSON = (path, body) => request(path, { method: "POST", body: body || {} });
+const getJSON = (path) => request(path, { method: "GET" });
+
+// Starts a new game. params: { category, opponent_persona, max_turns }
+export const getTopic = (params) => postJSON("/api/get-topic", params);
 export const getArgument = (payload) => postJSON("/api/get-argument", payload);
 export const getScores = (payload) => postJSON("/api/get-scores", payload);
+
+// Reads persisted games (history list + a single game's aggregated result).
+export const getGames = () => getJSON("/api/games");
+export const getGameResult = (id) => getJSON(`/api/games/${id}`);
