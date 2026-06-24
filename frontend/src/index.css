@@ -313,6 +313,7 @@ body {
 .seg button.is-selected { background: var(--verdict); color: #20190A; font-weight: 600; }
 .setup-note { font-family: var(--font-mono); font-size: .78rem; color: var(--muted-2); margin: 10px 0 0; }
 .setup-cta { margin-top: 34px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.setup-cta--center { justify-content: center; margin-bottom: 34px; }
 
 /* ---------- turn progress pips (rail) ---------- */
 .turn-pips { display: inline-flex; gap: 6px; justify-content: center; margin-top: 8px; }
@@ -331,6 +332,13 @@ body {
 .composer-meta .count b { color: var(--muted); font-weight: 600; }
 .composer-meta .hint { font-family: var(--font-mono); font-size: .72rem; color: var(--muted-2); }
 .btn-submit:disabled { opacity: .4; cursor: not-allowed; }
+.btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.btn-loading { display: inline-flex; align-items: center; gap: 8px; }
+.btn-spinner { width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(32,25,10,0.25); border-top-color: #20190A;
+  animation: btn-spin .7s linear infinite; }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){ .btn-spinner { animation: none; } }
 
 /* ---------- verdict: judge summary (총평) ---------- */
 .summary { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--paper-2); }

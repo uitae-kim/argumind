@@ -6,6 +6,30 @@
 
 ---
 
+## #4 — 시작 버튼 로딩 인디케이터 + 토론 종료 버튼 정렬 (D UI·UX)
+
+**배경**: 진행 중 발견된 두 가지 UI·UX 개선.
+1. 설정 화면의 `토론 시작` 버튼은 클릭 시 `startGame()`이 `POST /api/get-topic`(LLM 주제 생성)을 호출하지만, 응답 전까지 **시각적 대기 단서가 없고 버튼이 계속 활성** 상태였습니다. 주제 생성은 수 초가 걸릴 수 있어 사용자가 버튼을 수십 번 연타할 여지가 있었습니다.
+2. 진행 화면(`GameScreen`)의 `토론 그만두기` 버튼이 좌측 정렬(`SetupScreen`과 공유하는 좌측 flex 행 `.setup-cta`)이고 버튼 아래 여백이 없었습니다.
+
+**변경 내용**:
+- **로딩 인디케이터** (`frontend/src/`)
+  - `hooks/useGame.js`: `isStarting` 상태 추가. `startGame`은 `if (isStarting) return;`으로 재진입(연타)을 차단하고, `clearGame()` 후 `setIsStarting(true)`, `finally`에서 `setIsStarting(false)`로 성공·오류 양쪽에서 항상 해제. 반환 객체에 `isStarting` 노출.
+  - `App.js`: `SetupScreen`에 `isStarting={game.isStarting}` 전달.
+  - `components/SetupScreen.js`: `토론 시작` 버튼에 `disabled={isStarting}` + 로딩 중 스피너(`.btn-spinner`)와 `토론 준비 중…` 라벨 표시. `뒤로` 버튼도 로딩 중 비활성.
+  - `index.css`: `.btn:disabled`(hover `translateY` 리셋 포함), `.btn-loading`, `.btn-spinner`, `@keyframes btn-spin`, `prefers-reduced-motion` 정지 규칙 추가. 스피너 색은 골드 `btn-primary` 배경에 맞춤.
+- **종료 버튼 정렬** (`frontend/src/`)
+  - `components/GameScreen.js`: 래퍼 클래스를 `setup-cta setup-cta--center`로 변경.
+  - `index.css`: `.setup-cta--center { justify-content: center; margin-bottom: 34px; }` 추가. 공유 `.setup-cta` 규칙은 건드리지 않아 `SetupScreen`은 영향 없음(modifier로만 스코프).
+
+**검증**:
+- 구현 후 별도 검증 단계에서 5개 파일을 재확인: `isStarting` 상태/가드/`finally` 정상, JSX·중괄호 균형, 중복 선언 없음, 기존 CSS 규칙 보존, `.setup-cta--center`가 `GameScreen`에만 적용됨. 이슈 0건.
+- `clearGame()`은 `isStarting`을 건드리지 않으므로 `finally`가 플래그를 단독 소유 — stuck-true 위험 없음.
+
+**관련 로드맵**: README D "로딩 피드백 추가"의 시작 단계 부분에 해당. 진행 화면 턴 로딩은 이미 `.thinking`(리디자인 #2)으로 처리됨.
+
+---
+
 ## #3 — 시크릿 하드코딩 제거 및 `.env` 관리 (보안 강화)
 
 **배경**: `#2` 리팩토링에서 `SECRET_KEY`를 환경변수로 읽도록 바꿨지만, 소스(`settings.py`)에 **개발용 fallback 시크릿 문자열이 그대로 남아** 있었습니다. 이 값은 git 히스토리에도 포함되어 사실상 노출된 상태였습니다.

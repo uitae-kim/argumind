@@ -18,6 +18,7 @@ export default function SetupScreen({
   onMaxTurns,
   onStart,
   onBack,
+  isStarting,
 }) {
   return (
     <div className="setup">
@@ -110,10 +111,17 @@ export default function SetupScreen({
       </p>
 
       <div className="setup-cta">
-        <button className="btn btn-primary" type="button" onClick={onStart}>
-          토론 시작
+        <button className="btn btn-primary" type="button" onClick={onStart} disabled={isStarting}>
+          {isStarting ? (
+            <span className="btn-loading">
+              <span className="btn-spinner" aria-hidden="true"></span>
+              토론 준비 중…
+            </span>
+          ) : (
+            "토론 시작"
+          )}
         </button>
-        <button className="btn btn-ghost" type="button" onClick={onBack}>
+        <button className="btn btn-ghost" type="button" onClick={onBack} disabled={isStarting}>
           뒤로
         </button>
       </div>

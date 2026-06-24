@@ -196,7 +196,7 @@ export default function GameScreen({
         </div>
       </form>
 
-      <div className="setup-cta">
+      <div className="setup-cta setup-cta--center">
         <button className="btn btn-ghost" type="button" onClick={onRestart}>
           토론 그만두기
         </button>

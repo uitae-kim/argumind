@@ -76,6 +76,7 @@ export default function useGame() {
 
   const [userInput, setUserInput] = useState("");
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState("");
 
   // Verdict + history list.
@@ -109,7 +110,9 @@ export default function useGame() {
   };
 
   const startGame = async () => {
+    if (isStarting) return;
     clearGame();
+    setIsStarting(true);
     try {
       const data = await getTopic({
         category,
@@ -125,6 +128,8 @@ export default function useGame() {
     } catch (err) {
       setError(`주제를 불러오지 못했습니다: ${err.message}`);
       setScreen(SCREENS.SETUP);
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -256,6 +261,7 @@ export default function useGame() {
     userInput,
     setUserInput,
     isWaitingResponse,
+    isStarting,
     error,
     // verdict + history
     result,
