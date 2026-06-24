@@ -1,12 +1,20 @@
 import React from "react";
 
+import Logo from "./Logo";
+
 // 01 시작 (Landing). The hero is the thesis; the .loop spells out the real
 // sequence 배정 -> 논쟁 -> 판정. onStart fires the primary CTA, onHistory the ghost.
 export default function StartScreen({ onStart, onHistory }) {
   return (
     <div className="page">
       <div className="hero">
-        <p className="eyebrow hero-eyebrow">ArguMind · 변증의 장</p>
+        <div className="brand">
+          <Logo size={44} />
+          <div className="brand-text">
+            <span className="brand-name">ArguMind</span>
+            <span className="brand-sub">변증의 장</span>
+          </div>
+        </div>
         <h1 className="hero-title">
           모든 진실은 <span className="affirm">찬성</span>과{" "}
           <span className="negate">반대</span> 사이에서 벼려진다

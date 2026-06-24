@@ -196,3 +196,6 @@ sketch
 
 # JetBrains IDE
 .idea/
+
+# Dev-only CRA proxy (external frontend -> internal backend); local setup, not committed
+frontend/src/setupProxy.js

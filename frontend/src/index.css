@@ -134,6 +134,12 @@ body {
 /* App shell — centers each screen (the mockup used a .screen frame; the live app does not). */
 .app-shell { max-width: var(--maxw); margin: 0 auto; }
 
+/* Brand lockup (landing hero): emblem + wordmark. */
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--text); }
+.brand-sub { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; color: var(--verdict); }
+
 /* ======================================================================
    COMPONENTS
    ====================================================================== */
