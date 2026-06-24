@@ -50,7 +50,7 @@ class GetTopic(APIView):
             - "온라인 교육은 전통적인 교실 교육을 대체할 것이다."
             주제를 하나만 생성하세요.
             """
-        topic = _OpenAIHelper.generate(
+        topic = _GoogleAIHelper.generate(
             system="당신은 창의적인 논쟁 주제를 생성하는 AI입니다.",
             prompt=prompt
         )
@@ -102,7 +102,7 @@ class GetScores(APIView):
                 형식: 논리적 일관성: 점수, 관련성: 점수, 창의성: 점수, 반박 효과: 점수, 요약력: 점수
                 반드시 형식을 준수하세요.
                 """
-            raw = _OpenAIHelper.generate(
+            raw = _GoogleAIHelper.generate(
                 system="당신은 논리를 평가하는 심판 AI입니다.",
                 prompt=prompt,
                 temperature=0.7
@@ -169,7 +169,7 @@ class GetArgument(APIView):
                 {history}
                 상대방의 주장에 대응할 반박을 생성하세요.
             """
-            argument = _OpenAIHelper.generate(
+            argument = _GoogleAIHelper.generate(
                 system="당신은 논쟁에서 상대방의 주장을 반박하는 AI입니다.",
                 prompt=prompt,
                 temperature=0.7
@@ -191,17 +191,27 @@ class GetArgument(APIView):
             )
 
 
-class _OpenAIHelper:
+class _GoogleAIHelper:
+    """Wraps Google AI Studio (Gemini API) via its OpenAI-compatible endpoint.
+
+    The endpoint speaks the OpenAI chat-completions protocol, so the existing
+    `openai` client is reused. Gemma models do not accept a separate system
+    instruction, so the system prompt is folded into the user message.
+    """
+    _BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    _DEFAULT_MODEL = 'gemma-4-31b-it'
     _client = None
+    _model = None
     _is_loaded = False
 
     @classmethod
     def _load(cls):
         load_dotenv()
         cls._client = OpenAI(
-            api_key=os.getenv('OPENAI_API_KEY')
+            api_key=os.getenv('GOOGLE_API_KEY'),
+            base_url=cls._BASE_URL,
         )
-
+        cls._model = os.getenv('GOOGLE_AI_MODEL', cls._DEFAULT_MODEL)
         cls._is_loaded = True
 
     @classmethod
@@ -210,10 +220,9 @@ class _OpenAIHelper:
             cls._load()
 
         response = cls._client.chat.completions.create(
-            model='gpt-4o',
+            model=cls._model,
             messages=[
-                {'role': 'system', "content": system},
-                {'role': "user", "content": prompt}
+                {'role': 'user', 'content': f'{system}\n\n{prompt}'}
             ],
             temperature=temperature,
         )

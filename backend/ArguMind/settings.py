@@ -85,7 +85,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     # The LLM-backed endpoints are intentionally public (AllowAny) so the game
-    # needs no login, but each call costs an OpenAI request. Scoped rate limits
+    # needs no login, but each call costs a Google AI request. Scoped rate limits
     # cap abuse/cost without breaking the anonymous flow. Override the rates via
     # the DRF_THROTTLE_* env vars.
     'DEFAULT_THROTTLE_CLASSES': (
