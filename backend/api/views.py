@@ -200,6 +200,11 @@ class _GoogleAIHelper:
     """
     _BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/'
     _DEFAULT_MODEL = 'gemma-4-31b-it'
+    # Gemma models sometimes prefix replies with a <thought>...</thought>
+    # reasoning block. This strips it (and any unclosed leading block) so the
+    # raw reasoning never reaches users or pollutes _parse_scores.
+    _THOUGHT_RE = re.compile(r'<thought\b[^>]*>.*?</thought>', re.DOTALL | re.IGNORECASE)
+    _OPEN_THOUGHT_RE = re.compile(r'^\s*<thought\b[^>]*>.*', re.DOTALL | re.IGNORECASE)
     _client = None
     _model = None
     _is_loaded = False
@@ -226,4 +231,17 @@ class _GoogleAIHelper:
             ],
             temperature=temperature,
         )
-        return response.choices[0].message.content.strip()
+        return cls._strip_thoughts(response.choices[0].message.content)
+
+    @classmethod
+    def _strip_thoughts(cls, text):
+        """Remove Gemma <thought> reasoning blocks from a model reply.
+
+        Handles well-formed <thought>...</thought> blocks anywhere in the
+        text, plus an unclosed block at the start (model cut off mid-thought).
+        """
+        if not text:
+            return ''
+        cleaned = cls._THOUGHT_RE.sub('', text)
+        cleaned = cls._OPEN_THOUGHT_RE.sub('', cleaned)
+        return cleaned.strip()

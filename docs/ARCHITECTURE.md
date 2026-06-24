@@ -100,11 +100,13 @@ sequenceDiagram
 - **`GetScores`** (`throttle_scope='get_scores'`) — `post()`. `request.data`에서 `topic`, `position`, `history`, `text`를 읽어(누락 시 400 `{error:"missing field: <name>"}`), 채점 프롬프트 구성 후 `temperature=0.7`로 호출. `_parse_scores(raw)`로 레이블 기반 파싱(각 0~100 클램프, 누락 축 → 0)하여 `{scores:{logical_consistency, relevance, creativity, rebuttal, summarization}, total, max_total:500, raw}` 반환. 요청에 `game_id`, `turn_index`, `side`가 있으면 `Turn`/`Score`를 best-effort로 영속화(실패해도 응답은 정상). 오류 시 `{error}` 400.
 - **`GetArgument`** (`throttle_scope='get_argument'`) — `post()`. `topic`, `opposite_position`, `history`를 읽어(누락 시 400) 상대 입장의 반박 생성, `temperature=0.7`. `{argument}` 반환. 오류 시 `{error}` 400.
 
-### 2.3 `_OpenAIHelper` 싱글톤 (`backend/api/views.py`)
+### 2.3 `_GoogleAIHelper` 싱글톤 (`backend/api/views.py`)
 
-- 클래스 속성 `_client`, `_is_loaded`로 1회 초기화를 보장하는 지연 싱글톤.
-- `_load()` — `load_dotenv()` 후 `OpenAI(api_key=os.getenv('OPENAI_API_KEY'))`로 클라이언트 생성, `cls._client`에 저장, `_is_loaded = True`.
-- `generate(system, prompt, temperature=0.9)` — 최초 호출 시 `_load()` 수행 후 **`cls._client.chat.completions.create(model='gpt-4o', ...)`** 로 system/user 2개 메시지를 전송하고 `response.choices[0].message.content.strip()` 반환. (이전에 모듈 전역 `openai`를 직접 호출하던 버그가 수정되어 저장된 클라이언트 인스턴스를 사용합니다.)
+- 클래스 속성 `_client`, `_model`, `_is_loaded`로 1회 초기화를 보장하는 지연 싱글톤.
+- Google AI Studio(Gemini API)의 **OpenAI 호환 엔드포인트**(`https://generativelanguage.googleapis.com/v1beta/openai/`)를 사용하므로 기존 `openai` 클라이언트를 그대로 재사용합니다.
+- `_load()` — `load_dotenv()` 후 `OpenAI(api_key=os.getenv('GOOGLE_API_KEY'), base_url=...)`로 클라이언트 생성, `cls._model`은 `os.getenv('GOOGLE_AI_MODEL', 'gemma-4-31b-it')`로 설정, `_is_loaded = True`.
+- `generate(system, prompt, temperature=0.9)` — 최초 호출 시 `_load()` 수행 후 **`cls._client.chat.completions.create(model=cls._model, ...)`** 호출. Gemma 모델은 별도 system 메시지를 받지 않으므로 system 프롬프트를 user 메시지에 합쳐(`f'{system}\n\n{prompt}'`) 단일 메시지로 전송합니다.
+- **`<thought>` 후처리** — Gemma 모델은 응답 앞부분에 `<thought>...</thought>` 추론 블록을 덧붙이는 경우가 있습니다. `generate()`는 `_strip_thoughts(...)`로 이 블록을 제거한 뒤 `.strip()`하여 반환하므로, 추론 흔적이 사용자에게 노출되거나 `_parse_scores` 파싱을 오염시키지 않습니다. 닫는 태그가 없는 경우에도 안전하게 동작합니다.
 
 ### 2.4 URL 라우팅 표
 
