@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ArguMind — 변증의 장 · UI 목업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<style>
+/* ======================================================================
+   ArguMind — "변증의 장 (Arena of Dialectic)" design system
+   Locked tokens. Components below use single-class selectors only
+   (no element selectors) to avoid specificity collisions on spacing.
+   ====================================================================== */
+
+:root {
+  /* --- arena (dark) --- */
+  --ink:        #0C0F16;   /* arena background */
+  --ink-2:      #11151F;   /* raised surface */
+  --ink-3:      #171C28;   /* card */
+  --ink-4:      #1E2433;   /* card hover / inset */
+  --line:       #262E3E;   /* hairline */
+  --line-soft:  #1B2130;
+
+  --text:       #E9ECF3;
+  --muted:      #8B93A7;
+  --muted-2:    #5C6479;
+
+  /* --- the two poles --- */
+  --affirm:     #2FE3C2;   /* 찬성 — cool mint-cyan */
+  --affirm-dim: #1B9c8a;
+  --affirm-ink: #07241F;   /* text on affirm fill */
+  --affirm-wash:rgba(47,227,194,0.10);
+
+  --negate:     #FF7A4D;   /* 반대 — warm ember */
+  --negate-dim: #c4562f;
+  --negate-ink: #2C1107;   /* text on negate fill */
+  --negate-wash:rgba(255,122,77,0.10);
+
+  /* --- the judge --- */
+  --verdict:    #E7C46A;   /* gold */
+  --verdict-dim:#9C8340;
+
+  /* --- the ruling paper (light, used sparingly) --- */
+  --paper:      #F3EFE4;
+  --paper-2:    #E7E1D1;
+  --paper-ink:  #1A1814;
+  --paper-muted:#6B6552;
+
+  /* --- type --- */
+  --font-display: "Nanum Myeongjo", serif;
+  --font-sans:    "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    "IBM Plex Mono", "Pretendard", monospace;
+
+  /* --- scale --- */
+  --r-sm: 6px;
+  --r:    10px;
+  --r-lg: 16px;
+  --shadow: 0 18px 50px -20px rgba(0,0,0,0.7);
+  --maxw: 1120px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #131a28 0%, var(--ink) 55%) fixed;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  word-break: keep-all;        /* Korean: wrap at spaces, never mid-word */
+  overflow-wrap: break-word;
+}
+
+/* ---------- shared atoms ---------- */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin: 0;
+}
+
+.seam {                      /* the signature: glowing fault line */
+  width: 2px;
+  align-self: stretch;
+  background: linear-gradient(180deg,
+      transparent, var(--affirm) 12%, var(--verdict) 50%, var(--negate) 88%, transparent);
+  box-shadow: 0 0 22px 1px rgba(231,196,106,0.35);
+  border-radius: 2px;
+  position: relative;
+}
+.seam::after {               /* charged node where the two sides meet */
+  content: "";
+  position: absolute; top: 50%; left: 50%;
+  width: 9px; height: 9px; transform: translate(-50%,-50%) rotate(45deg);
+  background: var(--verdict);
+  box-shadow: 0 0 16px 3px rgba(231,196,106,0.6);
+}
+
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem; letter-spacing: 0.08em;
+  padding: 5px 11px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+  background: var(--ink-2);
+}
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-2); }
+.chip-affirm { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono);
+  font-size: 0.72rem; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(47,227,194,0.45); color: var(--affirm); background: var(--affirm-wash); }
+.chip-affirm .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--affirm); box-shadow: 0 0 10px var(--affirm); }
+.chip-negate { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono);
+  font-size: 0.72rem; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(255,122,77,0.45); color: var(--negate); background: var(--negate-wash); }
+.chip-negate .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--negate); box-shadow: 0 0 10px var(--negate); }
+
+.btn {
+  font-family: var(--font-sans); font-weight: 600; font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  padding: 13px 26px; border-radius: var(--r);
+  border: 1px solid var(--line); background: var(--ink-3); color: var(--text);
+  cursor: pointer; transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.btn:hover { transform: translateY(-1px); border-color: var(--muted-2); }
+.btn:focus-visible { outline: 2px solid var(--verdict); outline-offset: 2px; }
+.btn-primary {
+  background: var(--verdict); color: #20190A; border-color: transparent; font-weight: 700;
+  box-shadow: 0 10px 30px -10px rgba(231,196,106,0.5);
+}
+.btn-primary:hover { background: #f0d27e; }
+.btn-ghost { background: transparent; }
+
+.page { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+/* ---------- screen frame (mockup doc) ---------- */
+.screen-label {
+  max-width: var(--maxw); margin: 56px auto 14px; padding: 0 24px;
+  display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+}
+.screen-label .n { font-family: var(--font-mono); color: var(--verdict); font-size: 0.85rem; letter-spacing: .1em; }
+.screen-label .t { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; }
+.screen-label .d { color: var(--muted); font-size: 0.9rem; }
+.screen {
+  max-width: var(--maxw); margin: 0 auto 8px;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: rgba(12,15,22,0.6); overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+/* ======================================================================
+   COMPONENTS
+   ====================================================================== */
+
+/* ---------- top status rail (debate + verdict) ---------- */
+.rail {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 18px; padding: 18px 26px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+}
+.rail-mid { text-align: center; }
+.rail-turn { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: .18em; color: var(--verdict); }
+.rail-topic { font-family: var(--font-display); font-size: 1.02rem; font-weight: 700; color: var(--text); margin: 2px auto 0; max-width: 46ch; }
+.combatant { display: flex; align-items: center; gap: 10px; }
+.combatant.right { justify-content: flex-end; text-align: right; }
+.combatant .who { font-weight: 700; font-size: 0.92rem; }
+.combatant .role { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+.avatar { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; font-size: 0.85rem; flex: none; }
+.avatar-affirm { background: var(--affirm-wash); color: var(--affirm); border: 1px solid rgba(47,227,194,0.4); }
+.avatar-negate { background: var(--negate-wash); color: var(--negate); border: 1px solid rgba(255,122,77,0.4); }
+
+/* ---------- HERO / landing ---------- */
+.hero { padding: 96px 24px 72px; max-width: var(--maxw); margin: 0 auto; }
+.hero-eyebrow { margin-bottom: 22px; }
+.hero-title {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(2.6rem, 6.5vw, 5rem); line-height: 1.04; letter-spacing: -0.02em;
+  margin: 0; max-width: 18ch;
+}
+.hero-title .affirm { color: var(--affirm); white-space: nowrap; }
+.hero-title .negate { color: var(--negate); white-space: nowrap; }
+.hero-sub { color: var(--muted); font-size: 1.1rem; max-width: 52ch; margin: 22px 0 38px; line-height: 1.65; }
+.hero-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.hero-note { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted-2); }
+
+/* the loop: 배정 -> 논쟁 -> 판정 (a real sequence, so numbered) */
+.loop { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 72px;
+        list-style: none; padding: 0;
+        border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--line); }
+.loop-step { background: var(--ink-2); padding: 26px 24px; }
+.loop-step .k { font-family: var(--font-mono); font-size: 0.8rem; color: var(--verdict); letter-spacing: .1em; }
+.loop-step .h { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin: 12px 0 8px; }
+.loop-step .p { color: var(--muted); font-size: 0.92rem; line-height: 1.6; margin: 0; }
+
+/* ---------- DEBATE transcript with central seam ---------- */
+.arena { display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0; padding: 26px; min-height: 440px; }
+.col { display: flex; flex-direction: column; gap: 18px; padding: 8px 22px; }
+.col-affirm { align-items: flex-end; }
+.col-negate { align-items: flex-start; }
+
+.arg { max-width: 92%; border-radius: var(--r-lg); padding: 15px 17px 13px;
+       border: 1px solid var(--line); background: var(--ink-3); position: relative; }
+.arg-head { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.arg-turn { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: .1em; color: var(--muted-2); }
+.arg-text { font-size: 0.96rem; line-height: 1.6; color: var(--text); }
+.arg-affirm { border-color: rgba(47,227,194,0.35);
+              background: linear-gradient(180deg, var(--affirm-wash), transparent), var(--ink-3); }
+.arg-affirm .arg-turn { color: var(--affirm); }
+.arg-negate { border-color: rgba(255,122,77,0.35);
+              background: linear-gradient(180deg, var(--negate-wash), transparent), var(--ink-3); }
+.arg-negate .arg-turn { color: var(--negate); }
+
+/* mini per-turn score readout (mono) */
+.miniscore { display: flex; gap: 6px; margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--line); flex-wrap: wrap; }
+.miniscore .m { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); letter-spacing: .03em; }
+.miniscore .m b { color: var(--text); font-weight: 600; }
+.miniscore .tot { margin-left: auto; font-family: var(--font-mono); font-size: 0.74rem; color: var(--verdict); font-weight: 600; }
+
+/* AI thinking / judge scoring loading state */
+.thinking { display: flex; align-items: center; gap: 12px; padding: 14px 17px; border-radius: var(--r-lg);
+            border: 1px dashed rgba(255,122,77,0.4); background: var(--negate-wash); max-width: 92%; }
+.thinking .pulse { display: inline-flex; gap: 4px; }
+.thinking .pulse i { width: 7px; height: 7px; border-radius: 50%; background: var(--negate); animation: bob 1s infinite ease-in-out; }
+.thinking .pulse i:nth-child(2){ animation-delay: .15s; } .thinking .pulse i:nth-child(3){ animation-delay: .3s; }
+.thinking .lbl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--negate); }
+@keyframes bob { 0%,100%{ transform: translateY(0); opacity:.5 } 50%{ transform: translateY(-5px); opacity:1 } }
+@media (prefers-reduced-motion: reduce){ .thinking .pulse i { animation: none; } }
+
+/* ---------- COMPOSER (podium) ---------- */
+.composer { border-top: 1px solid var(--line); padding: 18px 26px;
+            background: linear-gradient(0deg, rgba(47,227,194,0.05), transparent); }
+.composer-row { display: flex; gap: 12px; align-items: flex-end; margin: 0; }
+.composer-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.composer-label { font-family: var(--font-mono); font-size: 0.72rem; color: var(--affirm); letter-spacing: .08em; }
+.composer textarea { width: 100%; resize: none; min-height: 56px; font-family: var(--font-sans); font-size: 0.98rem;
+            color: var(--text); background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--r);
+            padding: 13px 15px; line-height: 1.5; }
+.composer textarea:focus { outline: none; border-color: var(--affirm); box-shadow: 0 0 0 3px var(--affirm-wash); }
+.composer textarea::placeholder { color: var(--muted-2); }
+.btn-submit { background: var(--affirm); color: var(--affirm-ink); border-color: transparent; font-weight: 700;
+              padding: 15px 28px; align-self: stretch; }
+.btn-submit:hover { background: #4bf0d2; }
+
+/* ---------- VERDICT (ruling on paper) ---------- */
+.verdict { padding: 34px 26px 40px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center; }
+.verdict-paper { background: linear-gradient(160deg, var(--paper), var(--paper-2));
+                 color: var(--paper-ink); border-radius: var(--r-lg); padding: 30px 30px 26px;
+                 box-shadow: var(--shadow); }
+.verdict-paper .eyebrow { color: var(--paper-muted); }
+.ruling { font-family: var(--font-display); font-weight: 800; font-size: 2.4rem; line-height: 1.1; margin: 10px 0 4px; }
+.ruling .win { color: #0b7d63; } .ruling .lose { color: #b23a17; }
+.ruling-sub { color: var(--paper-muted); font-size: 0.95rem; margin-bottom: 22px; }
+
+.tally { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px;
+         border-top: 1px solid var(--paper-2); border-bottom: 1px solid var(--paper-2); padding: 16px 0; margin-bottom: 20px; }
+.tally .side { text-align: center; }
+.tally .side .role { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: .12em; }
+.tally .side.affirm .role { color: var(--affirm-dim); } .tally .side.negate .role { color: var(--negate-dim); }
+.tally .side .num { font-family: var(--font-mono); font-weight: 600; font-size: 2.6rem; line-height: 1; color: var(--paper-ink); }
+.tally .side .den { font-family: var(--font-mono); font-size: 0.8rem; color: var(--paper-muted); }
+.tally .vs { font-family: var(--font-display); font-weight: 700; color: var(--paper-muted); font-size: 1rem; }
+/* seam reused on the paper as the fault line where the verdict resolves */
+.tally .seam { height: 58px; justify-self: center; box-shadow: 0 0 16px 0 rgba(231,196,106,0.45); }
+
+/* buttons sit on light paper here — re-theme for contrast */
+.verdict-paper .btn { background: var(--paper-ink); color: var(--paper); border-color: var(--paper-ink); }
+.verdict-paper .btn:hover { background: #2f2b22; }
+.verdict-paper .btn-primary { background: var(--verdict); color: #20190A; border-color: transparent; }
+.verdict-paper .btn-primary:hover { background: #f0d27e; }
+.verdict-paper .btn-ghost { background: transparent; color: var(--paper-ink); border-color: rgba(26,24,20,0.28); }
+.verdict-paper .btn-ghost:hover { background: rgba(26,24,20,0.06); }
+.verdict-paper .hero-cta { margin-top: 24px; }
+
+/* per-axis bars (5, fixed order = the rubric) */
+.axes { display: flex; flex-direction: column; gap: 13px; }
+.axis .axis-top { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.74rem; margin-bottom: 5px; }
+.axis .axis-name { color: var(--paper-ink); } .axis .axis-val { color: var(--paper-muted); }
+.axis .track { height: 7px; border-radius: 99px; background: var(--paper-2); position: relative; overflow: hidden; }
+.axis .fill-affirm { position: absolute; inset: 0 auto 0 0; background: var(--affirm-dim); border-radius: 99px; }
+
+/* radar holder */
+.radar-wrap { display: grid; place-items: center; }
+.radar-legend { display: flex; gap: 18px; justify-content: center; margin-top: 14px; }
+.radar-legend .lg { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+.radar-legend .sw { width: 12px; height: 3px; border-radius: 2px; }
+
+/* ---------- error banner ---------- */
+.banner { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin: 0;
+          background: rgba(255,122,77,0.12); border-bottom: 1px solid rgba(255,122,77,0.4); color: #ffd0bd; }
+.banner .x { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 1.1rem; }
+
+/* ======================================================================
+   ADDED COMPONENTS — proposed UX (not yet in code/wireframe)
+   ====================================================================== */
+
+/* ---------- SETUP / 매치 설정 ---------- */
+.setup { padding: 40px 26px 46px; max-width: 880px; margin: 0 auto; }
+.setup-section { margin-bottom: 30px; }
+.sec-label { font-family: var(--font-mono); font-size: .74rem; letter-spacing: .14em; color: var(--verdict);
+             text-transform: uppercase; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
+.sec-label .no { color: var(--muted-2); }
+.opt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.opt-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.opt-card { text-align: left; background: var(--ink-3); border: 1px solid var(--line); border-radius: var(--r);
+            padding: 16px; cursor: pointer; color: var(--text); font-family: inherit;
+            transition: border-color .12s, background .12s, transform .12s; }
+.opt-card:hover { transform: translateY(-1px); border-color: var(--muted-2); }
+.opt-card:focus-visible { outline: 2px solid var(--verdict); outline-offset: 2px; }
+.opt-card .ot { display: block; font-weight: 700; font-size: .98rem; }
+.opt-card .od { display: block; color: var(--muted); font-size: .82rem; margin-top: 5px; line-height: 1.45; }
+.opt-card.is-selected { border-color: var(--affirm); background: var(--affirm-wash); box-shadow: inset 0 0 0 1px var(--affirm); }
+.opt-card.is-selected .ot { color: var(--affirm); }
+.opt-card .persona { display: flex; gap: 12px; align-items: flex-start; }
+.opt-card .persona .avatar { margin-top: 2px; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--ink-2); }
+.seg button { font-family: var(--font-mono); font-size: .82rem; padding: 10px 18px; background: transparent;
+              color: var(--muted); border: none; border-right: 1px solid var(--line); cursor: pointer; }
+.seg button:last-child { border-right: none; }
+.seg button.is-selected { background: var(--verdict); color: #20190A; font-weight: 600; }
+.setup-note { font-family: var(--font-mono); font-size: .78rem; color: var(--muted-2); margin: 10px 0 0; }
+.setup-cta { margin-top: 34px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- turn progress pips (rail) ---------- */
+.turn-pips { display: inline-flex; gap: 6px; justify-content: center; margin-top: 8px; }
+.turn-pips .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.turn-pips .pip.done { background: var(--verdict); }
+.turn-pips .pip.now { background: var(--verdict); box-shadow: 0 0 0 3px rgba(231,196,106,0.22); }
+
+/* ---------- per-turn judge note ---------- */
+.judge-note { display: flex; gap: 8px; margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line);
+              font-size: .82rem; color: var(--muted); line-height: 1.5; }
+.judge-note .jl { font-family: var(--font-mono); font-size: .64rem; letter-spacing: .08em; color: var(--verdict); flex: none; margin-top: 2px; }
+
+/* ---------- composer meta (count + shortcut hint) ---------- */
+.composer-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.composer-meta .count { font-family: var(--font-mono); font-size: .72rem; color: var(--muted-2); }
+.composer-meta .count b { color: var(--muted); font-weight: 600; }
+.composer-meta .hint { font-family: var(--font-mono); font-size: .72rem; color: var(--muted-2); }
+.btn-submit:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---------- verdict: judge summary (총평) ---------- */
+.summary { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--paper-2); }
+.summary .sl { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; color: var(--paper-muted); text-transform: uppercase; margin-bottom: 8px; }
+.summary .st { font-family: var(--font-display); font-size: 1rem; line-height: 1.65; color: var(--paper-ink); }
+
+/* ---------- verdict: score trajectory sparkline ---------- */
+.trend { margin-top: 26px; width: 100%; }
+.trend .tl { font-family: var(--font-mono); font-size: .74rem; color: var(--muted); margin-bottom: 10px; letter-spacing: .08em; }
+.spark { width: 100%; height: auto; }
+
+/* ---------- HISTORY / 토론 기록 ---------- */
+.history { padding: 34px 26px 42px; max-width: 940px; margin: 0 auto; }
+.history-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+.history-head h2 { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; margin: 0; }
+.history-head .hsub { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+.record { display: flex; gap: 26px; }
+.record .r .rn { font-family: var(--font-mono); font-size: 1.45rem; font-weight: 600; }
+.record .r .rn.win { color: var(--affirm); } .record .r .rn.lose { color: var(--negate); }
+.record .r .rl { font-family: var(--font-mono); font-size: .7rem; color: var(--muted); letter-spacing: .1em; }
+.match-list { display: flex; flex-direction: column; gap: 10px; }
+.match-card { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center;
+              padding: 16px 18px; background: var(--ink-3); border: 1px solid var(--line); border-radius: var(--r);
+              cursor: pointer; transition: border-color .12s, transform .12s; text-align: left; color: var(--text); font-family: inherit; width: 100%; }
+.match-card:hover { border-color: var(--muted-2); transform: translateY(-1px); }
+.badge { font-family: var(--font-mono); font-size: .74rem; font-weight: 600; padding: 6px 11px; border-radius: 7px; letter-spacing: .06em; }
+.badge.win { color: var(--affirm); background: var(--affirm-wash); border: 1px solid rgba(47,227,194,0.4); }
+.badge.lose { color: var(--negate); background: var(--negate-wash); border: 1px solid rgba(255,122,77,0.4); }
+.match-topic .mt { font-weight: 600; font-size: .98rem; }
+.match-topic .mmeta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.match-right { text-align: right; }
+.match-right .ms { font-family: var(--font-mono); font-size: .92rem; color: var(--muted); }
+.match-right .ms b { color: var(--text); }
+.match-right .md { font-family: var(--font-mono); font-size: .72rem; color: var(--muted-2); margin-top: 5px; }
+
+/* ---------- doc chrome (mockup page only — not part of the app) ---------- */
+.doc-head { max-width: var(--maxw); margin: 0 auto; padding: 64px 24px 8px; }
+.doc-head .kicker { font-family: var(--font-mono); color: var(--verdict); letter-spacing: .2em; text-transform: uppercase; font-size: 0.75rem; }
+.doc-head h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3.2rem); margin: 14px 0 10px; letter-spacing: -0.02em; }
+.doc-head p { color: var(--muted); max-width: 64ch; line-height: 1.7; margin: 0; }
+.doc-foot { max-width: var(--maxw); margin: 40px auto; padding: 24px; color: var(--muted-2); font-family: var(--font-mono); font-size: 0.78rem; border-top: 1px solid var(--line); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 760px) {
+  .arena { grid-template-columns: 1fr; }
+  .arena .seam { display: none; }
+  .col { padding: 6px 0; } .col-affirm, .col-negate { align-items: stretch; }
+  .arg { max-width: 100%; }
+  .verdict { grid-template-columns: 1fr; }
+  .loop { grid-template-columns: 1fr; }
+  .rail { grid-template-columns: 1fr; gap: 12px; } .rail-mid { order: -1; }
+  .composer-row { flex-direction: column; align-items: stretch; }
+  .opt-grid, .opt-grid.cols-2 { grid-template-columns: 1fr; }
+  .match-card { grid-template-columns: auto 1fr; }
+  .match-right { grid-column: 1 / -1; text-align: left; }
+  .history-head { align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ DOC HEADER (mockup chrome, not part of the product) ============ -->
+<header class="doc-head">
+  <div class="kicker">ArguMind · Design Mockup</div>
+  <h1>변증의 장 <span style="color:var(--muted-2);font-weight:400;">— Arena of Dialectic</span></h1>
+  <p>AI 토론 게임 ArguMind의 리디자인 기준안입니다. 두 입장(찬성·반대)이 가운데 <strong style="color:var(--text)">발광하는 이음새(seam)</strong>를 사이에 두고 맞서고,
+     5개 축의 판정이 그 이음새를 축으로 펼쳐집니다. 아래 세 화면은 정적 목업이며, 실제 동작은 없습니다.
+     색·타입·토큰 정의는 <code style="color:var(--verdict)">docs/design/DESIGN_SYSTEM.md</code>를 참고하세요.</p>
+</header>
+
+<!-- ============ 1. LANDING / 시작 ============ -->
+<div class="screen-label">
+  <span class="n">01</span><span class="t">시작 — Landing</span>
+  <span class="d">게임 진입 · 입장 배정 전 (gameStarted === false)</span>
+</div>
+<section class="screen" aria-label="시작 화면">
+  <div class="page">
+    <div class="hero">
+      <p class="eyebrow hero-eyebrow">ArguMind · 변증의 장</p>
+      <h1 class="hero-title">모든 진실은 <span class="affirm">찬성</span>과 <span class="negate">반대</span> 사이에서 벼려진다</h1>
+      <p class="hero-sub">ArguMind는 당신에게 한쪽 입장을 무작위로 배정합니다. 당신은 AI 토론자를 상대로 논쟁하고, 심판 AI가 매 턴을 5개 축으로 채점합니다.</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary" type="button">토론 시작</button>
+        <button class="btn btn-ghost" type="button">예시 토론 보기</button>
+        <span class="hero-note">입장은 무작위 배정 · 매 턴 5축 채점</span>
+      </div>
+    </div>
+    <ol class="loop">
+      <li class="loop-step">
+        <span class="k">01</span>
+        <h2 class="h">배정</h2>
+        <p class="p">주제가 던져지고, 찬성과 반대 중 한쪽이 당신에게 배정됩니다. 입장은 고를 수 없습니다.</p>
+      </li>
+      <li class="loop-step">
+        <span class="k">02</span>
+        <h2 class="h">논쟁</h2>
+        <p class="p">턴을 주고받으며 AI 토론자와 맞섭니다. 상대의 허점을 짚고, 당신의 주장을 세웁니다.</p>
+      </li>
+      <li class="loop-step">
+        <span class="k">03</span>
+        <h2 class="h">판정</h2>
+        <p class="p">심판 AI가 5개 축으로 매 턴을 채점하고, 누적 점수로 승부를 가립니다.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 2. SETUP / 설정 (신규 제안) ============ -->
+<div class="screen-label">
+  <span class="n">02</span><span class="t">설정 — Setup</span>
+  <span class="d">신규 제안 · 주제 영역 + 상대 페르소나 + 매치 길이 선택 (입장은 무작위 유지)</span>
+</div>
+<section class="screen" aria-label="새 토론 설정 화면">
+  <div class="setup">
+    <p class="eyebrow">새 토론 설정</p>
+    <h2>무엇을 두고 겨룰까요</h2>
+
+    <div class="setup-section">
+      <p class="sec-label"><span class="no">01</span> · 주제 영역</p>
+      <div class="opt-grid">
+        <button class="opt-card" aria-pressed="false">
+          <span class="ot">사회·윤리</span>
+          <span class="od">분배, 정의, 권리가 부딪치는 쟁점</span>
+        </button>
+        <button class="opt-card is-selected" aria-pressed="true">
+          <span class="ot">기술·AI</span>
+          <span class="od">자동화와 알고리즘이 바꾸는 질서</span>
+        </button>
+        <button class="opt-card" aria-pressed="false">
+          <span class="ot">문화·예술</span>
+          <span class="od">취향과 표현의 경계를 둘러싼 논쟁</span>
+        </button>
+        <button class="opt-card" aria-pressed="false">
+          <span class="ot">무작위</span>
+          <span class="od">어떤 영역이 나올지 모르는 채로 시작</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <p class="sec-label"><span class="no">02</span> · 상대 토론자</p>
+      <div class="opt-grid cols-2">
+        <button class="opt-card" aria-pressed="false">
+          <span class="persona">
+            <span class="avatar avatar-negate">論</span>
+            <div>
+              <span class="ot">논리주의자</span>
+              <span class="od">전제와 결론의 빈틈을 파고듭니다.</span>
+            </div>
+          </span>
+        </button>
+        <button class="opt-card is-selected" aria-pressed="true">
+          <span class="persona">
+            <span class="avatar avatar-negate">挑</span>
+            <div>
+              <span class="ot">도발가</span>
+              <span class="od">당신의 약한 고리를 집요하게 물고 늘어집니다.</span>
+            </div>
+          </span>
+        </button>
+        <button class="opt-card" aria-pressed="false">
+          <span class="persona">
+            <span class="avatar avatar-negate">蘇</span>
+            <div>
+              <span class="ot">소크라테스식</span>
+              <span class="od">질문을 던져 스스로 모순에 이르게 합니다.</span>
+            </div>
+          </span>
+        </button>
+        <button class="opt-card" aria-pressed="false">
+          <span class="persona">
+            <span class="avatar avatar-negate">史</span>
+            <div>
+              <span class="ot">역사 속 인물</span>
+              <span class="od">특정 사상가의 관점을 빌려 논쟁합니다.</span>
+            </div>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <p class="sec-label"><span class="no">03</span> · 매치 길이</p>
+      <div class="seg" role="group" aria-label="매치 길이">
+        <button class="is-selected" aria-pressed="true">3턴</button>
+        <button aria-pressed="false">5턴</button>
+        <button aria-pressed="false">무제한</button>
+      </div>
+    </div>
+
+    <p class="setup-note">
+      <span class="chip chip-affirm"><span class="dot"></span>나</span>
+      <span class="chip chip-negate"><span class="dot"></span>AI · 도발가</span>
+      찬성·반대 입장은 토론을 시작할 때 무작위로 배정됩니다.
+    </p>
+
+    <div class="setup-cta">
+      <button class="btn btn-primary" type="button">토론 시작</button>
+      <button class="btn btn-ghost" type="button">뒤로</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. DEBATE / 진행 ============ -->
+<div class="screen-label">
+  <span class="n">03</span><span class="t">진행 — Debate</span>
+  <span class="d">턴제 논쟁 · 중앙 이음새로 갈린 양측 · 응답/채점 대기 상태 포함</span>
+</div>
+<section class="screen" aria-label="토론 진행 화면">
+  <div class="rail">
+    <div class="combatant right">
+      <div>
+        <div class="who">나</div>
+        <div class="role">찬성</div>
+      </div>
+      <div class="avatar avatar-affirm">나</div>
+    </div>
+    <div class="rail-mid">
+      <div class="rail-turn">TURN 02 / 03</div>
+      <div class="turn-pips" aria-label="3턴 중 2턴 진행 중"><span class="pip done"></span><span class="pip now"></span><span class="pip"></span></div>
+      <div class="rail-topic">인공지능이 생성한 예술도 인간의 창작물과 동등한 저작권으로 보호받아야 하는가?</div>
+    </div>
+    <div class="combatant">
+      <div class="avatar avatar-negate">AI</div>
+      <div>
+        <div class="who">AI 토론자</div>
+        <div class="role">반대</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arena">
+    <div class="col col-affirm">
+      <div class="arg arg-affirm">
+        <div class="arg-head">
+          <span class="arg-turn">T1</span>
+          <span class="chip-affirm"><span class="dot"></span>찬성</span>
+        </div>
+        <div class="arg-text">AI 예술도 사람이 프롬프트를 설계하고 수백 번 선별·편집한 창작 노동의 산물입니다. 도구가 붓에서 알고리즘으로 바뀌었을 뿐, 창작 의도와 최종 선택은 여전히 사람의 몫입니다.</div>
+        <div class="miniscore">
+          <span class="m">논리 <b>82</b></span>
+          <span class="m">관련 <b>88</b></span>
+          <span class="m">창의 <b>74</b></span>
+          <span class="m">반박 <b>70</b></span>
+          <span class="m">요약 <b>79</b></span>
+          <span class="tot">393</span>
+        </div>
+        <div class="judge-note"><span class="jl">심판</span><span>도구론은 설득력 있으나, 창작 ‘의도’의 근거가 다소 추상적입니다.</span></div>
+      </div>
+      <div class="arg arg-affirm">
+        <div class="arg-head">
+          <span class="arg-turn">T2</span>
+          <span class="chip-affirm"><span class="dot"></span>찬성</span>
+        </div>
+        <div class="arg-text">그 논리라면 사진도 빛과 렌즈가 만든 결과물이니 보호받지 못해야 합니다. 그러나 우리는 구도와 순간을 ‘선택’한 사진가를 창작자로 인정합니다. AI 예술의 선별도 같은 창작적 선택입니다.</div>
+        <div class="miniscore">
+          <span class="m">논리 <b>86</b></span>
+          <span class="m">관련 <b>90</b></span>
+          <span class="m">창의 <b>78</b></span>
+          <span class="m">반박 <b>83</b></span>
+          <span class="m">요약 <b>80</b></span>
+          <span class="tot">417</span>
+        </div>
+        <div class="judge-note"><span class="jl">심판</span><span>사진 비유로 상대의 전제를 정면으로 되받은, 이번 매치의 결정적 한 수.</span></div>
+      </div>
+    </div>
+
+    <div class="seam"></div>
+
+    <div class="col col-negate">
+      <div class="arg arg-negate">
+        <div class="arg-head">
+          <span class="arg-turn">T1</span>
+          <span class="chip-negate"><span class="dot"></span>반대</span>
+        </div>
+        <div class="arg-text">프롬프트 입력은 주문서이지 창작이 아닙니다. 저작권은 ‘인간의 창작적 표현’을 보호하는데, 결과물의 형태를 결정한 것은 학습 데이터와 모델의 확률 분포입니다.</div>
+        <div class="miniscore">
+          <span class="m">논리 <b>80</b></span>
+          <span class="m">관련 <b>84</b></span>
+          <span class="m">창의 <b>78</b></span>
+          <span class="m">반박 <b>81</b></span>
+          <span class="m">요약 <b>66</b></span>
+          <span class="tot">389</span>
+        </div>
+        <div class="judge-note"><span class="jl">심판</span><span>‘주문서’ 비유는 날카로우나, 마무리 요약이 약해 논점이 다소 흩어집니다.</span></div>
+      </div>
+      <div class="thinking" role="status" aria-live="polite">
+        <div class="pulse"><i></i><i></i><i></i></div>
+        <div class="lbl">AI 토론자가 반박을 구성하고 심판이 채점 중…</div>
+      </div>
+    </div>
+  </div>
+
+  <form class="composer" onsubmit="return false;">
+    <div class="composer-row">
+      <div class="composer-field">
+        <label class="composer-label" for="arg-input">나의 주장 · 찬성</label>
+        <textarea id="arg-input" placeholder="논거를 입력하세요…"></textarea>
+      </div>
+      <button class="btn btn-submit" type="submit">주장 제출</button>
+    </div>
+    <div class="composer-meta">
+      <span class="count"><b>128</b> / 600자</span>
+      <span class="hint">Enter 제출 · Shift+Enter 줄바꿈</span>
+    </div>
+  </form>
+</section>
+
+<!-- ============ 4. VERDICT / 결과 (현재 미구현 — 제안 화면) ============ -->
+<div class="screen-label">
+  <span class="n">04</span><span class="t">판정 — Verdict</span>
+  <span class="d">제안 화면 (현재 앱 미구현) · 5축 레이더 + 승패 판정</span>
+</div>
+<section class="screen" aria-label="최종 판정 화면">
+  <div class="rail">
+    <div class="combatant right">
+      <div>
+        <div class="who">나</div>
+        <div class="role">찬성</div>
+      </div>
+      <div class="avatar avatar-affirm">나</div>
+    </div>
+    <div class="rail-mid">
+      <div class="rail-turn">최종 판정</div>
+      <div class="rail-topic">인공지능이 생성한 예술도 인간의 창작물과 동등한 저작권으로 보호받아야 하는가?</div>
+    </div>
+    <div class="combatant">
+      <div class="avatar avatar-negate">AI</div>
+      <div>
+        <div class="who">AI 토론자</div>
+        <div class="role">반대</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <div class="verdict-paper">
+      <p class="eyebrow">심판의 판정</p>
+      <div class="ruling"><span class="win">당신의 승리</span></div>
+      <div class="ruling-sub">3턴 누적 · 24점 차</div>
+      <div class="tally">
+        <div class="side affirm">
+          <div class="role">나 · 찬성</div>
+          <div class="num">412</div>
+          <div class="den">/500</div>
+        </div>
+        <div class="seam"></div>
+        <div class="side negate">
+          <div class="role">AI · 반대</div>
+          <div class="num">388</div>
+          <div class="den">/500</div>
+        </div>
+      </div>
+      <div class="axes">
+        <div class="axis">
+          <div class="axis-top"><span class="axis-name">논리적 일관성</span><span class="axis-val">84</span></div>
+          <div class="track"><div class="fill-affirm" style="width:84%"></div></div>
+        </div>
+        <div class="axis">
+          <div class="axis-top"><span class="axis-name">관련성</span><span class="axis-val">89</span></div>
+          <div class="track"><div class="fill-affirm" style="width:89%"></div></div>
+        </div>
+        <div class="axis">
+          <div class="axis-top"><span class="axis-name">창의성</span><span class="axis-val">76</span></div>
+          <div class="track"><div class="fill-affirm" style="width:76%"></div></div>
+        </div>
+        <div class="axis">
+          <div class="axis-top"><span class="axis-name">반박 효과</span><span class="axis-val">80</span></div>
+          <div class="track"><div class="fill-affirm" style="width:80%"></div></div>
+        </div>
+        <div class="axis">
+          <div class="axis-top"><span class="axis-name">요약력</span><span class="axis-val">84</span></div>
+          <div class="track"><div class="fill-affirm" style="width:84%"></div></div>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="sl">심판 총평</div>
+        <p class="st">관련성과 논리적 일관성에서 앞섰습니다. 특히 사진 비유로 상대의 ‘주문서’ 논리를 정면으로 되받은 2턴이 결정적이었고, 창의성에서는 근소하게 뒤졌습니다.</p>
+      </div>
+      <div class="hero-cta">
+        <button class="btn btn-primary" type="button">새 주제로 다시</button>
+        <button class="btn btn-ghost" type="button">기록 보기</button>
+        <button class="btn btn-ghost" type="button">결과 공유</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="radar-wrap" aria-label="5개 평가 축 레이더 차트: 나(찬성) 대 AI(반대)">
+        <svg viewBox="-30 12 410 322" role="img" aria-label="5축 점수 레이더: 나(찬성) 대 AI(반대)" style="width:100%;max-width:380px;height:auto">
+          <polygon points="175,145 203.53,165.73 192.63,199.27 157.37,199.27 146.47,165.73" fill="none" stroke="#262E3E" stroke-width="1"/>
+          <polygon points="175,115 232.06,156.46 210.27,223.54 139.73,223.54 117.94,156.46" fill="none" stroke="#262E3E" stroke-width="1"/>
+          <polygon points="175,85 260.6,147.19 227.9,247.81 122.1,247.81 89.4,147.19" fill="none" stroke="#262E3E" stroke-width="1"/>
+          <polygon points="175,55 289.13,137.92 245.53,272.08 104.47,272.08 60.87,137.92" fill="none" stroke="#2c3447" stroke-width="1.5"/>
+          <g stroke="#1f2636" stroke-width="1">
+            <line x1="175" y1="175" x2="175" y2="55"/>
+            <line x1="175" y1="175" x2="289.13" y2="137.92"/>
+            <line x1="175" y1="175" x2="245.53" y2="272.08"/>
+            <line x1="175" y1="175" x2="104.47" y2="272.08"/>
+            <line x1="175" y1="175" x2="60.87" y2="137.92"/>
+          </g>
+          <polygon points="175,77.8 270.87,143.85 230.72,251.7 117.16,254.61 95.11,149.04"
+                   fill="rgba(255,122,77,0.16)" stroke="#FF7A4D" stroke-width="2" stroke-linejoin="round"/>
+          <polygon points="175,74.2 276.58,142 228.6,248.78 118.57,252.67 79.13,143.85"
+                   fill="rgba(47,227,194,0.18)" stroke="#2FE3C2" stroke-width="2" stroke-linejoin="round"/>
+          <g fill="#8B93A7" font-family="'IBM Plex Mono', monospace" font-size="11.5">
+            <text x="175" y="40" text-anchor="middle">논리적 일관성</text>
+            <text x="300" y="134" text-anchor="start">관련성</text>
+            <text x="252" y="292" text-anchor="start">창의성</text>
+            <text x="98" y="292" text-anchor="end">반박 효과</text>
+            <text x="50" y="134" text-anchor="end">요약력</text>
+          </g>
+        </svg>
+      </div>
+      <div class="radar-legend">
+        <span class="lg"><span class="sw" style="background:#2FE3C2"></span>나 · 찬성</span>
+        <span class="lg"><span class="sw" style="background:#FF7A4D"></span>AI · 반대</span>
+      </div>
+      <div class="trend">
+        <div class="tl">턴별 누적 점수 추이</div>
+        <svg class="spark" viewBox="0 0 300 98" role="img" aria-label="턴별 점수 추이: 나(찬성) 393에서 417, 426으로 상승, AI(반대) 389, 384, 391">
+          <line x1="20" y1="80" x2="288" y2="80" stroke="#262E3E" stroke-width="1"/>
+          <polyline points="30,53.25 150,57 270,51.75" fill="none" stroke="#FF7A4D" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          <g fill="#FF7A4D"><circle cx="30" cy="53.25" r="3"/><circle cx="150" cy="57" r="3"/><circle cx="270" cy="51.75" r="3"/></g>
+          <polyline points="30,50.25 150,32.25 270,25.5" fill="none" stroke="#2FE3C2" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          <g fill="#2FE3C2"><circle cx="30" cy="50.25" r="3"/><circle cx="150" cy="32.25" r="3"/><circle cx="270" cy="25.5" r="3"/></g>
+          <g fill="#8B93A7" font-family="'IBM Plex Mono', monospace" font-size="10">
+            <text x="30" y="94" text-anchor="middle">T1</text>
+            <text x="150" y="94" text-anchor="middle">T2</text>
+            <text x="270" y="94" text-anchor="middle">T3</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. HISTORY / 토론 기록 (신규 제안) ============ -->
+<div class="screen-label">
+  <span class="n">05</span><span class="t">기록 — History</span>
+  <span class="d">신규 제안 · 지난 토론 + 전적 (GET /api/games 필요)</span>
+</div>
+<section class="screen" aria-label="토론 기록 화면">
+  <div class="history">
+    <div class="history-head">
+      <div>
+        <h2>토론 기록</h2>
+        <p class="hsub">지난 토론을 다시 보고 점수 추이를 확인하세요.</p>
+      </div>
+      <div class="record">
+        <div class="r"><span class="rn win">12</span><span class="rl">승</span></div>
+        <div class="r"><span class="rn lose">7</span><span class="rl">패</span></div>
+        <div class="r"><span class="rn">401</span><span class="rl">평균 점수 (나)</span></div>
+      </div>
+    </div>
+    <div class="match-list">
+      <button class="match-card" aria-label="승 · 나 412 대 AI 388 · 2026.06.24 · AI 예술 저작권">
+        <span class="badge win">승</span>
+        <div class="match-topic">
+          <div class="mt">인공지능이 생성한 예술도 인간의 창작물과 동등한 저작권으로 보호받아야 하는가?</div>
+          <div class="mmeta">
+            <span class="chip chip-affirm"><span class="dot"></span>찬성</span>
+            <span class="chip">기술·AI</span>
+            <span class="chip">도발가</span>
+          </div>
+        </div>
+        <div class="match-right">
+          <div class="ms"><b>나 412</b> · AI 388</div>
+          <div class="md">2026.06.24</div>
+        </div>
+      </button>
+      <button class="match-card" aria-label="패 · 나 372 대 AI 405 · 2026.06.21 · 유전자 편집">
+        <span class="badge lose">패</span>
+        <div class="match-topic">
+          <div class="mt">유전자 편집으로 질병을 제거하는 것은 정당한가?</div>
+          <div class="mmeta">
+            <span class="chip chip-negate"><span class="dot"></span>반대</span>
+            <span class="chip">사회·윤리</span>
+            <span class="chip">소크라테스식</span>
+          </div>
+        </div>
+        <div class="match-right">
+          <div class="ms"><b>나 372</b> · AI 405</div>
+          <div class="md">2026.06.21</div>
+        </div>
+      </button>
+      <button class="match-card" aria-label="승 · 나 421 대 AI 399 · 2026.06.18 · 기본소득">
+        <span class="badge win">승</span>
+        <div class="match-topic">
+          <div class="mt">기본소득은 노동 의욕을 떨어뜨리는가?</div>
+          <div class="mmeta">
+            <span class="chip chip-affirm"><span class="dot"></span>찬성</span>
+            <span class="chip">사회·윤리</span>
+            <span class="chip">논리주의자</span>
+          </div>
+        </div>
+        <div class="match-right">
+          <div class="ms"><b>나 421</b> · AI 399</div>
+          <div class="md">2026.06.18</div>
+        </div>
+      </button>
+      <button class="match-card" aria-label="패 · 나 360 대 AI 418 · 2026.06.15 · SNS와 민주주의">
+        <span class="badge lose">패</span>
+        <div class="match-topic">
+          <div class="mt">SNS는 민주주의에 득보다 실이 많은가?</div>
+          <div class="mmeta">
+            <span class="chip chip-negate"><span class="dot"></span>반대</span>
+            <span class="chip">사회·윤리</span>
+            <span class="chip">논리주의자</span>
+          </div>
+        </div>
+        <div class="match-right">
+          <div class="ms"><b>나 360</b> · AI 418</div>
+          <div class="md">2026.06.15</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATE: 오류 배너 (component state) ============ -->
+<div class="screen-label">
+  <span class="n">+</span><span class="t">상태 — 오류 배너</span>
+  <span class="d">API 실패 시 (role="alert") · 모든 화면 상단에 표시</span>
+</div>
+<section class="screen" aria-label="오류 배너 상태">
+  <div class="banner" role="alert">
+    <span>주제를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</span>
+    <button class="x" type="button" aria-label="닫기">×</button>
+  </div>
+  <div class="rail">
+    <div class="combatant right"><div><div class="who">나</div><div class="role">대기 중</div></div><div class="avatar avatar-affirm">나</div></div>
+    <div class="rail-mid"><div class="rail-turn">연결 끊김</div><div class="rail-topic">재시도하면 새 주제가 배정됩니다.</div></div>
+    <div class="combatant"><div class="avatar avatar-negate">AI</div><div><div class="who">AI 토론자</div><div class="role">대기 중</div></div></div>
+  </div>
+</section>
+
+<footer class="doc-foot">
+  ArguMind UI Mockup · "변증의 장 (Arena of Dialectic)" · 정적 디자인 기준안 · 색·타입·토큰: docs/design/DESIGN_SYSTEM.md
+</footer>
+
+</body>
+</html>

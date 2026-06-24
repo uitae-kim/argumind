@@ -8,9 +8,45 @@ class Game(models.Model):
     AGAINST = '반대'
     POSITION_CHOICES = [(FOR, FOR), (AGAINST, AGAINST)]
 
+    # Topic category (english key stored; matches frontend constants).
+    ETHICS = 'ethics'
+    TECH = 'tech'
+    CULTURE = 'culture'
+    RANDOM = 'random'
+    CATEGORY_CHOICES = [
+        (ETHICS, ETHICS),
+        (TECH, TECH),
+        (CULTURE, CULTURE),
+        (RANDOM, RANDOM),
+    ]
+
+    # Opponent debater persona (english key stored).
+    LOGICIAN = 'logician'
+    PROVOCATEUR = 'provocateur'
+    SOCRATIC = 'socratic'
+    HISTORICAL = 'historical'
+    PERSONA_CHOICES = [
+        (LOGICIAN, LOGICIAN),
+        (PROVOCATEUR, PROVOCATEUR),
+        (SOCRATIC, SOCRATIC),
+        (HISTORICAL, HISTORICAL),
+    ]
+
+    # Game lifecycle status.
+    ACTIVE = 'active'
+    FINISHED = 'finished'
+    STATUS_CHOICES = [(ACTIVE, ACTIVE), (FINISHED, FINISHED)]
+
     topic = models.TextField()
     user_position = models.CharField(max_length=8, choices=POSITION_CHOICES)
     opponent_position = models.CharField(max_length=8, choices=POSITION_CHOICES)
+    category = models.CharField(max_length=16, choices=CATEGORY_CHOICES, default=RANDOM)
+    opponent_persona = models.CharField(
+        max_length=16, choices=PERSONA_CHOICES, default=PROVOCATEUR
+    )
+    # 0 = unlimited (no auto verdict).
+    max_turns = models.PositiveSmallIntegerField(default=3)
+    status = models.CharField(max_length=8, choices=STATUS_CHOICES, default=ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -54,6 +90,7 @@ class Score(models.Model):
     summarization = models.PositiveSmallIntegerField()
     total = models.PositiveIntegerField()
 
+    comment = models.TextField(blank=True, default='')
     raw = models.TextField(blank=True, help_text='Raw LLM scoring text, kept for auditing.')
     created_at = models.DateTimeField(auto_now_add=True)
 
