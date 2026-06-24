@@ -29,6 +29,7 @@ function App() {
           onMaxTurns={game.setMaxTurns}
           onStart={game.startGame}
           onBack={game.goToStart}
+          isStarting={game.isStarting}
         />
       )}
 

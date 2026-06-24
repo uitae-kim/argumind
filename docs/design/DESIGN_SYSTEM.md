@@ -119,6 +119,7 @@ ArguMind는 단순한 채팅이 아니라 **변증(辯證) — 두 입장의 충
   .seam               시그니처 단층선 (빈 div; ::after가 골드 결절점)
   .chip-affirm/-negate  .dot + 텍스트 (입장 칩)
   .btn / .btn-primary(골드) / .btn-ghost / .btn-submit(시안)
+  .btn:disabled(반투명·비활성, hover 이동 리셋) / .btn-loading(스피너+라벨 래퍼) > .btn-spinner(회전, reduced-motion 정지)
 
 레일(rail)            .rail > .combatant(.right){ .who,.role + .avatar-affirm } | .rail-mid{ .rail-turn,.rail-topic } | .combatant{ .avatar-negate + .who,.role }
 히어로(hero)          .hero > .eyebrow, h1.hero-title(.affirm/.negate span), .hero-sub, .hero-cta(.btn-primary,.btn-ghost,.hero-note)
@@ -132,7 +133,7 @@ ArguMind는 단순한 채팅이 아니라 **변증(辯證) — 두 입장의 충
 
 — 신규 제안 (§8) —
 설정(setup)          .setup > .eyebrow, h2, .setup-section(p.sec-label(span.no) , .opt-grid[.cols-2](button.opt-card[.is-selected][aria-pressed]( .ot,.od | .persona(.avatar-negate + div(.ot,.od)) )) | .seg(button[.is-selected][aria-pressed])) , p.setup-note(.chip-*) , .setup-cta(.btn-*)
-진행 추가            .rail-mid > .turn-pips(.pip[.done/.now]) ; .arg > … .judge-note(.jl + 텍스트) ; form.composer > … .composer-meta(.count>b , .hint)
+진행 추가            .rail-mid > .turn-pips(.pip[.done/.now]) ; .arg > … .judge-note(.jl + 텍스트) ; form.composer > … .composer-meta(.count>b , .hint) ; .setup-cta.setup-cta--center(중앙 정렬 + 하단 여백, 토론 그만두기 CTA)
 기록(history)        .history > .history-head( div(h2,p.hsub) , .record(.r(.rn[.win/.lose],.rl)) ) , .match-list( button.match-card[aria-label]( .badge.win/.lose , .match-topic(.mt,.mmeta(.chip-*)) , .match-right(.ms>b,.md) ) )
 ```
 
@@ -146,7 +147,7 @@ ArguMind는 단순한 채팅이 아니라 **변증(辯證) — 두 입장의 충
 
 - **반응형**: 모바일(≤760px)에서 `.arena`/`.verdict`/`.loop`는 1열로 쌓이고 `.seam`은 숨김, `.composer`는 세로 정렬.
 - **접근성**: 실제 `<button>`/`<textarea>`+`<label>`, `:focus-visible` 골드 아웃라인, 로딩 `aria-live`, 오류 `role="alert"`, 레이더 `aria-label`.
-- **모션**: `.thinking` 점 애니메이션은 `prefers-reduced-motion: reduce`에서 정지.
+- **모션**: `.thinking` 점 애니메이션과 `.btn-spinner` 회전은 `prefers-reduced-motion: reduce`에서 정지.
 - **CSS 규약**: 단일 클래스 선택자 위주 — 엘리먼트 선택자와 클래스 선택자가 간격(padding/margin)에서 충돌하지 않도록.
 
 ---
